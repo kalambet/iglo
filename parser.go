@@ -1,17 +1,22 @@
 package iglo
 
+/*
+#cgo CPPFLAGS: -I${SRCDIR}/drafter/src -I${SRCDIR}/drafter/ext/snowcrash/src -I${SRCDIR}/drafter/ext/snowcrash/ext/markdown-parser/src -I${SRCDIR}/drafter/ext/snowcrash/ext/markdown-parser/ext/sundown/src -I${SRCDIR}/drafter/ext/sos/src -I${SRCDIR}/drafter/ext/cmdline
+#cgo LDFLAGS: -L${SRCDIR}/drafter/build/out/Release -lsos -lsundown -lsnowcrash -lmarkdownparser -ldrafter
+#include <stdlib.h>
+#include "snowcrash.h"
+#include "cdrafter.h"
+*/
+import "C"
+
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
-	"os/exec"
-
-	version "github.com/hashicorp/go-version"
 )
+import "unsafe"
 
+// ParseJSON ...
 func ParseJSON(r io.Reader) (*API, error) {
 	api := new(API)
 	err := json.NewDecoder(r).Decode(&api)
@@ -23,43 +28,28 @@ func ParseJSON(r io.Reader) (*API, error) {
 	return api, nil
 }
 
+// ParseMarkdown ...
 func ParseMarkdown(r io.Reader) ([]byte, error) {
-	path, err := drafter()
-	if err != nil {
-		return nil, err
-	}
 
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	buf := bytes.NewReader(b)
-	cmd := exec.Command(path, "--format", "json", "--type", "ast")
-	cmd.Stdin = buf
+	length := len(b)
+	source := C.CString(string(b[:length]))
+	var result *string
 
-	return cmd.Output()
-}
+	code := int(C.drafter_c_parse(
+		source,
+		C.int(0),
+		C.int(0),
+		(**C.char)(unsafe.Pointer(result)),
+	))
 
-func CheckVersion(v string) error {
-	mv, _ := version.NewVersion("2.0.1")
-	ov, err := version.NewVersion(v)
-	if err != nil {
-		return err
-	}
+	fmt.Ptintf("%#v", result)
 
-	if ov.LessThan(mv) {
-		return errors.New(fmt.Sprintf("You are using drafter version %s. Minimum version should be %s", ov, mv))
-	}
+	defer C.free(unsafe.Pointer(result))
 
-	return nil
-}
-
-func drafter() (string, error) {
-	path, err := exec.LookPath("drafter")
-	if err != nil {
-		return "", errors.New("Couldn't find drafter. Please install it first https://github.com/apiaryio/drafter")
-	}
-
-	return path, nil
+	return nil, code
 }

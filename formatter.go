@@ -32,10 +32,12 @@ func markdownize(str string) template.HTML {
 	return template.HTML(string(b))
 }
 
+// HTML ...
 func HTML(w io.Writer, api *API) error {
 	return HTMLCustom(Tmpl, w, api)
 }
 
+// HTMLCustom ...
 func HTMLCustom(s string, w io.Writer, api *API) error {
 	funcMap := template.FuncMap{
 		"dasherize":   inflect.Dasherize,
@@ -57,10 +59,12 @@ func HTMLCustom(s string, w io.Writer, api *API) error {
 	return nil
 }
 
+// MarkdownToHTML ...
 func MarkdownToHTML(w io.Writer, r io.Reader) error {
 	return MarkdownToHTMLCustom(Tmpl, w, r)
 }
 
+// MarkdownToHTMLCustom ...
 func MarkdownToHTMLCustom(s string, w io.Writer, r io.Reader) error {
 	data, err := ParseMarkdown(r)
 	if err != nil {
@@ -75,6 +79,7 @@ func MarkdownToHTMLCustom(s string, w io.Writer, r io.Reader) error {
 	return nil
 }
 
+// JSONToHTML ...
 func JSONToHTML(w io.Writer, r io.Reader) error {
 	return JSONToHTMLCustom(Tmpl, w, r)
 }

@@ -14,7 +14,7 @@ func TestFormatter(t *testing.T) {
 
 		api, err := ParseJSON(f)
 		if err != nil {
-			t.Error("ParseJSON returned an error %s", err)
+			t.Errorf("ParseJSON returned an error %s", err)
 		}
 
 		o, _ := os.Create("index.html")
